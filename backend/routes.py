@@ -7,9 +7,14 @@ from services.embedding_service import save_user_embeddings, modify_user_embeddi
 from services.chatbot_service import get_user_chat_response
 from functools import wraps
 
-
 main_bp = Blueprint('main', __name__)
 CORS(main_bp, supports_credentials=True)
+
+@main_bp.route('/ping', methods=['GET', 'POST'])
+def ping():
+    return jsonify({
+        "status": "ok"
+    }), 200
 
 def token_required(f):
     @wraps(f)
