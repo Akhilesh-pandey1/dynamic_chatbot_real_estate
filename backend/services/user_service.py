@@ -38,9 +38,9 @@ def delete_user_by_name(name):
     if not result:
         return {"error": "User not found"}, 404
     
-    directory = f"embeddings/{name}_embeddings"
-    if os.path.exists(directory):
-        shutil.rmtree(directory)
+    embedding_file = f"embeddings/{name}_embeddings.pkl"
+    if os.path.exists(embedding_file):
+        os.remove(embedding_file)
         
     return {"message": f"User {name} deleted successfully"}, 200
 
