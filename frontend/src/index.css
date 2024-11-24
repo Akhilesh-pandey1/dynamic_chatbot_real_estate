@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for antd overrides */
+.ant-table {
+  @apply bg-white rounded-lg shadow-md;
+}
+
+.ant-table-thead > tr > th {
+  @apply bg-gray-50 text-gray-700 font-semibold;
+}
+
+.ant-table-tbody > tr > td {
+  @apply text-gray-600;
+}
+
+.ant-btn-primary {
+  @apply bg-blue-500 border-blue-500 hover:bg-blue-600 hover:border-blue-600;
+}
+
+.ant-btn-dangerous {
+  @apply bg-red-500 border-red-500 hover:bg-red-600 hover:border-red-600 text-white;
+}
+
+/* Antd Select Overrides */
+.custom-select .ant-select-selector {
+  @apply h-9 px-3 rounded-md border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors duration-150 !important;
+  @apply flex items-center !important;
+}
+
+.custom-select.ant-select-focused .ant-select-selector {
+  @apply border-gray-300 ring-0 shadow-none !important;
+}
+
+.custom-select .ant-select-selection-placeholder {
+  @apply text-sm !important;
+}
+
+.custom-select-popup {
+  @apply mt-1 !important;
+}
+
+.custom-select-dropdown {
+  @apply p-1 rounded-lg shadow-lg border border-gray-100 bg-white !important;
+}
+
+.custom-select-option {
+  @apply px-3 py-1.5 rounded-md transition-colors duration-150 !important;
+}
+
+.ant-select-item-option-active {
+  @apply bg-gray-50 !important;
+}
+
+.ant-select-item-option-selected {
+  @apply bg-gray-100 !important;
+  @apply text-gray-900 !important;
+}
+
+/* Remove default ant-select focus styles */
+.ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
+  @apply shadow-none !important;
+}
+
+/* Replace existing chat message styles with these */
+.chat-message {
+  @apply flex items-start px-4 py-1.5;
+}
+
+.user-message {
+  @apply flex-row-reverse;
+}
+
+.message-content {
+  @apply max-w-[75%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed shadow-sm;
+}
+
+.user-content {
+  @apply bg-[#4318FF] text-white rounded-br-none;
+}
+
+.ai-content {
+  @apply bg-white text-gray-800 rounded-bl-none;
+}
+
+/* Add these new styles at the end of your file */
+.ant-input {
+  @apply bg-[#F4F7FE] border-0 !important;
+}
+
+.ant-input:focus {
+  @apply shadow-none !important;
+}
+
+.ant-btn > .anticon {
+  @apply flex items-center justify-center;
+}
+
+.ant-input::placeholder {
+  @apply text-gray-400;
+}
+
+/* Style for the TextArea component */
+.ant-input-textarea-show-count::after {
+  @apply hidden !important;
+}
+
+.ant-input-textarea textarea.ant-input {
+  @apply transition-all duration-200;
+}
+
+.ant-input-textarea textarea.ant-input:hover {
+  @apply bg-[#EDF0F9] !important;
+}
+
+.ant-input-textarea textarea.ant-input:focus {
+  @apply bg-[#F4F7FE] !important;
+}
+
+/* Add these styles to fix the chat layout */
+.ant-list {
+  @apply h-full overflow-y-auto px-4;
+}
+
+.ant-list-items {
+  @apply pb-4;
+}
+
+/* Fix input area styles */
+.ant-input-textarea-show-count::after {
+  @apply hidden !important;
+}
+
+.ant-input-textarea {
+  @apply mb-0 !important;
+}
+
