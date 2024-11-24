@@ -15,4 +15,4 @@ app.register_blueprint(main_bp)
 init_db(app)
 
 if __name__ == '__main__':
-    app.run(debug=os.getenv('FLASK_DEBUG', True)) 
+    app.run(host='0.0.0.0') 
