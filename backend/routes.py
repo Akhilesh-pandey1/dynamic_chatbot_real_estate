@@ -3,7 +3,7 @@ from flask_cors import CORS
 from database import mongo
 from services.auth_service import create_user, authenticate_user, verify_token, admin_required
 from services.user_service import create_user, delete_user_by_name, get_all_users, get_user_names
-from services.embedding_service import save_user_embeddings, modify_user_embeddings
+from services.embedding_service import save_user_embeddings, modify_user_embeddings, get_embedding_statistics
 from services.chatbot_service import get_user_chat_response
 from functools import wraps
 
@@ -110,4 +110,10 @@ def chat_with_user(name):
 @main_bp.route('/api/users/names', methods=['GET'])
 def get_user_names_route():
     response, status_code = get_user_names()
+    return jsonify(response), status_code
+
+@main_bp.route('/api/embedding-stats', methods=['GET'])
+def get_embedding_stats():
+    response, status_code = get_embedding_statistics()
+    print("DEBUG - Backend response:", response)
     return jsonify(response), status_code

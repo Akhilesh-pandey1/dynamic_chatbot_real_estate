@@ -125,6 +125,22 @@ const API = {
       throw error;
     }
   },
+
+  getEmbeddingStats: async () => {
+    try {
+      console.log("Fetching embedding stats...");
+      const response = await axios.get(`${API_BASE_URL}/api/embedding-stats`, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+      console.log("Embedding stats response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching embedding stats:', error.response || error);
+      throw error;
+    }
+  },
 };
 
 export default API;

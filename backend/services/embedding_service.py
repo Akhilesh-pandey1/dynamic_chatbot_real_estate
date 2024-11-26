@@ -88,3 +88,24 @@ def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
         print(f"Document Score: {score}")
         relevant_chunks.append(doc.page_content)
     return relevant_chunks
+
+@exception_handler
+def get_embedding_statistics():
+    embedding_dir = "embeddings"
+    if not os.path.exists(embedding_dir):
+        return {"error": "Embeddings directory not found"}, 404
+        
+    total_size = 0
+    total_users = 0
+    
+    for filename in os.listdir(embedding_dir):
+        if filename.endswith('_embeddings.pkl'):
+            file_path = os.path.join(embedding_dir, filename)
+            size_mb = os.path.getsize(file_path) / (1024 * 1024)
+            total_size += size_mb
+            total_users += 1
+    
+    return {
+        "total_size_mb": round(total_size, 2),
+        "total_embeddings": total_users
+    }, 200

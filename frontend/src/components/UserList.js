@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button, message, Input } from 'antd';
-import { EditOutlined, DeleteOutlined, LeftOutlined, RightOutlined, SearchOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, message, Input, Modal, Statistic } from 'antd';
+import { EditOutlined, DeleteOutlined, LeftOutlined, RightOutlined, SearchOutlined, PlusOutlined, BarChartOutlined } from '@ant-design/icons';
 import API from '../utils/API';
 import CreateUser from './CreateUser';
 import ModifyUser from './ModifyUser';
+import EmbeddingStats from './EmbeddingStats';
 
 const { Search } = Input;
 
@@ -16,6 +17,7 @@ function UserList() {
   const [searchText, setSearchText] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [modifyUser, setModifyUser] = useState(null);
+  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -75,6 +77,14 @@ function UserList() {
     setModifyUser(user);
   };
 
+  const handleStatsClick = () => {
+    setShowStats(true);
+  };
+
+  if (showStats) {
+    return <EmbeddingStats onBack={() => setShowStats(false)} />;
+  }
+
   if (error) {
     return <div className="w-full p-4 text-red-600">Error: {error}</div>;
   }
@@ -98,6 +108,13 @@ function UserList() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
           <div className="flex items-center space-x-4">
+            <Button
+              icon={<BarChartOutlined />}
+              onClick={handleStatsClick}
+              className="flex items-center h-10 px-4 bg-green-50 text-green-600 hover:bg-green-100 border-none rounded-md shadow-sm transition-all duration-150"
+            >
+              <span className="ml-2 font-medium">Usage Stats</span>
+            </Button>
             <div className="relative">
               <input
                 type="text"
