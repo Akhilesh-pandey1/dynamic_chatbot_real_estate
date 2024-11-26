@@ -92,8 +92,10 @@ def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
 @exception_handler
 def get_embedding_statistics():
     embedding_dir = "embeddings"
-    if not os.path.exists(embedding_dir):
-        return {"error": "Embeddings directory not found"}, 404
+    abs_path = os.path.abspath(embedding_dir)
+    print("abs path", abs_path, flush=True)
+    if not os.path.exists(abs_path):
+        return {"error": f"Embeddings directory not found, {abs_path}"}, 404
         
     total_size = 0
     total_users = 0

@@ -115,5 +115,5 @@ def get_user_names_route():
 @main_bp.route('/api/embedding-stats', methods=['GET'])
 def get_embedding_stats():
     response, status_code = get_embedding_statistics()
-    print("DEBUG - Backend response:", response)
+    print("DEBUG - Backend response:", response, flush=True)
     return jsonify(response), status_code
