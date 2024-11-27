@@ -1,6 +1,4 @@
-import os
 import pickle
-import base64
 from langchain_community.embeddings import JinaEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
@@ -42,11 +40,9 @@ def save_user_embeddings(username, text):
     embedding_model = embedding_function()
     db = FAISS.from_documents(documents, embedding_model)
     
-    # Serialize FAISS index
     buffer = io.BytesIO()
     pickle.dump(db, buffer)
     
-    # Save to GridFS
     fs = GridFS(mongo.db)
     fs.put(buffer.getvalue(), filename=f"{username}_embeddings")
     
@@ -56,15 +52,11 @@ def save_user_embeddings(username, text):
 def modify_user_embeddings(username, new_text):
     """Updates existing embeddings for a user with new text and tracks modifications."""
     if not new_text:
-        return {"error": "New text is required"}, 400
-    
+        raise ValueError("New text is required")
     fs = GridFS(mongo.db)
     existing_file = fs.find_one({"filename": f"{username}_embeddings"})
-    if not existing_file:
-        return {"error": "User embeddings not found"}, 404
-        
-    fs.delete(existing_file._id)
     
+    fs.delete(existing_file._id)
     modified_at = datetime.utcnow()
     mongo.db.users.update_one(
         {"name": username},
@@ -73,7 +65,6 @@ def modify_user_embeddings(username, new_text):
             "$inc": {"modifications": 1}
         }
     )
-    
     response, status_code = save_user_embeddings(username, new_text)
     return response, status_code
 
@@ -86,32 +77,26 @@ def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
         print(f"No embeddings found for user: {username}")
         return []
     
-    # Load FAISS directly from GridFS data
     buffer = io.BytesIO(file_data.read())
     vectorstore = pickle.loads(buffer.getvalue())
     
-    # Use the loaded vectorstore directly
     results = vectorstore.similarity_search_with_score(query, k=k)
-    return [doc.page_content for doc, score in results]
+    chunks = [doc.page_content for doc, score in results]
+    return chunks
     
 
 @exception_handler
 def get_embedding_statistics():
     """Returns total size and count of embeddings stored in GridFS."""
-    try:
-        fs = GridFS(mongo.db)
-        total_size = 0
-        total_embeddings = 0
+    fs = GridFS(mongo.db)
+    total_size = 0
+    total_embeddings = 0
+    
+    for grid_file in fs.find({"filename": {"$regex": "_embeddings$"}}):
+        total_size += grid_file.length
+        total_embeddings += 1
         
-        for grid_file in fs.find({"filename": {"$regex": "_embeddings$"}}):
-            total_size += grid_file.length
-            total_embeddings += 1
-            
-        return {
-            "total_size_mb": round(total_size / (1024 * 1024), 2),
-            "total_embeddings": total_embeddings
-        }, 200
-
-    except Exception as e:
-        print(f"Error getting embedding stats: {str(e)}", flush=True)
-        return {"error": str(e)}, 500
+    return {
+        "total_size_mb": round(total_size / (1024 * 1024), 2),
+        "total_embeddings": total_embeddings
+    }, 200

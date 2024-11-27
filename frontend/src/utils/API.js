@@ -3,6 +3,12 @@ import axios from 'axios';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const API = {
+  handleError: (error) => {
+    const errorMessage = error.response?.data?.error || error.message || 'An unexpected error occurred';
+    alert(errorMessage);
+    throw new Error(errorMessage);
+  },
+
   getSessionId: async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/get_session_id`, { withCredentials: true });
@@ -23,11 +29,9 @@ const API = {
         },
         withCredentials: true
       });
-      console.log('API Response:', response.data);
       return response.data.users;
     } catch (error) {
-      console.error('Error fetching users:', error.response || error);
-      throw error;
+      API.handleError(error);
     }
   },
 
@@ -46,7 +50,7 @@ const API = {
       );
       return response.data;
     } catch (error) {
-      console.error('Error creating user:', error.response || error);
+      alert(error.response?.data?.error || 'Failed to create user');
       throw error;
     }
   },
@@ -65,7 +69,7 @@ const API = {
       );
       return response.data;
     } catch (error) {
-      console.error('Error deleting user:', error.response || error);
+      alert(error.response?.data?.error || 'Error deleting user');
       throw error;
     }
   },
@@ -86,6 +90,7 @@ const API = {
       return response.data;
     } catch (error) {
       console.error('Error modifying user:', error.response || error);
+      alert(error.response?.data?.error || 'Error modifying user');
       throw error;
     }
   },
@@ -106,6 +111,7 @@ const API = {
       return response.data;
     } catch (error) {
       console.error('Error in chat:', error.response || error);
+      alert('Server error');
       throw error;
     }
   },
@@ -122,6 +128,7 @@ const API = {
       return response.data.names;
     } catch (error) {
       console.error('Error fetching user names:', error.response || error);
+      alert('Error fetching user names');
       throw error;
     }
   },
@@ -138,6 +145,7 @@ const API = {
       return response.data;
     } catch (error) {
       console.error('Error fetching embedding stats:', error.response || error);
+      alert('Error fetching embedding stats');
       throw error;
     }
   },

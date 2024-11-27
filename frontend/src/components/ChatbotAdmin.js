@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Select, Avatar, Input, Button, List } from 'antd';
+import { Select, Avatar, Input, Button, List, message } from 'antd';
 import { UserOutlined, SendOutlined, RobotOutlined, FilterOutlined } from '@ant-design/icons';
 import API from '../utils/API';
 
@@ -107,7 +107,7 @@ function ChatbotAdmin() {
       setMessages(prev => [...prev, aiMessage]);
 
     } catch (error) {
-      console.error('Failed to get response:', error);
+      message.error(error.message);
     } finally {
       setIsLoading(false);
     }

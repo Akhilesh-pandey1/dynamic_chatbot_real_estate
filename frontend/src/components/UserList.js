@@ -28,12 +28,10 @@ function UserList() {
       setLoading(true);
       setError(null);
       const data = await API.getAllUsers();
-      console.log('Fetched data:', data);
       setUsers(data || []);
     } catch (error) {
-      console.error('Error:', error);
-      setError(error.message || 'Failed to fetch users');
-      message.error('Failed to fetch users');
+      setError(error.message);
+      message.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -63,11 +61,9 @@ function UserList() {
       setLoading(true);
       await API.deleteUser(name);
       message.success('User deleted successfully');
-      // Refresh the user list
       await fetchUsers();
     } catch (error) {
-      console.error('Error:', error);
-      message.error(error.response?.data?.error || 'Failed to delete user');
+      message.error(error.message);
     } finally {
       setLoading(false);
     }
