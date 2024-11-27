@@ -20,15 +20,10 @@ def get_initial_state(question, chat_history, username):
 
 @exception_handler
 def get_user_chat_response(name, chat_history):
+    """Generates a chat response for a user based on their chat history."""
     last_interaction = chat_history[-1]
     last_question = last_interaction[0]
     previous_chat_history = chat_history[:-1]
-    embeddings_file = f"embeddings/{name}_embeddings.pkl"
-    if not os.path.exists(embeddings_file):
-        if mongo.db.users.find_one({"name": name}):
-            return {"error": "User knowledge base not found"}, 404
-        else:
-            return {"error": "User not found"}, 404
     
     # Convert chat history to LangChain message format
     messages = []

@@ -1,10 +1,13 @@
 import os
 import pickle
+import base64
 from langchain_community.embeddings import JinaEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
 from try_catch_decorator import exception_handler
 from datetime import datetime
+from gridfs import GridFS
+import io
 from database import mongo
 
 @exception_handler
@@ -13,14 +16,8 @@ def embedding_function():
     return embedding_model
 
 @exception_handler
-def create_user_embedding_directory():
-    directory = f"embeddings"
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    return directory
-
-@exception_handler
 def chunk_text(text: str) -> list:
+    """Split text into chunks by double newlines and return non-empty chunks."""
     chunks = [chunk.strip() for chunk in text.split('\n\n')]
     chunks = [chunk for chunk in chunks if chunk]
     print("len(chunks)", len(chunks))
@@ -30,35 +27,43 @@ def chunk_text(text: str) -> list:
 
 @exception_handler
 def save_user_embeddings(username, text):
+    if not username:
+        raise ValueError("Username is required")
     if not text:
-        return {"error": "Text is required"}, 400
+        raise ValueError("Text is required")
+    if not isinstance(text, str):
+        raise TypeError("Text must be a string")
     
     chunks = chunk_text(text)
     if not chunks:
-        return {"error": "No valid text chunks found"}, 400
+        raise ValueError("No valid text chunks found")
     
     documents = [Document(page_content=chunk) for chunk in chunks]
-    
-    directory = create_user_embedding_directory()
     embedding_model = embedding_function()
     db = FAISS.from_documents(documents, embedding_model)
     
-    file_path = f"{directory}/{username}_embeddings.pkl"
-    with open(file_path, "wb") as f:
-        pickle.dump(db, f)
-
-    return {"message": f"Embeddings saved successfully for user {username}"}, 201
+    # Serialize FAISS index
+    buffer = io.BytesIO()
+    pickle.dump(db, buffer)
+    
+    # Save to GridFS
+    fs = GridFS(mongo.db)
+    fs.put(buffer.getvalue(), filename=f"{username}_embeddings")
+    
+    return {"message": "Embeddings saved successfully"}, 201
 
 @exception_handler
 def modify_user_embeddings(username, new_text):
+    """Updates existing embeddings for a user with new text and tracks modifications."""
     if not new_text:
         return {"error": "New text is required"}, 400
     
-    file_path = f"embeddings/{username}_embeddings.pkl"
-    if not os.path.exists(file_path):
+    fs = GridFS(mongo.db)
+    existing_file = fs.find_one({"filename": f"{username}_embeddings"})
+    if not existing_file:
         return {"error": "User embeddings not found"}, 404
         
-    os.remove(file_path)
+    fs.delete(existing_file._id)
     
     modified_at = datetime.utcnow()
     mongo.db.users.update_one(
@@ -74,40 +79,39 @@ def modify_user_embeddings(username, new_text):
 
 @exception_handler
 def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
-    file_path = f"embeddings/{username}_embeddings.pkl"
-    if not os.path.exists(file_path):
-        print(f"Embeddings file not found for user: {username}")
+    fs = GridFS(mongo.db)
+    file_data = fs.find_one({"filename": f"{username}_embeddings"})
+    
+    if not file_data:
+        print(f"No embeddings found for user: {username}")
         return []
     
-    with open(file_path, "rb") as f:
-        vectorstore = pickle.load(f)
+    # Load FAISS directly from GridFS data
+    buffer = io.BytesIO(file_data.read())
+    vectorstore = pickle.loads(buffer.getvalue())
+    
+    # Use the loaded vectorstore directly
     results = vectorstore.similarity_search_with_score(query, k=k)
-    relevant_chunks = []
-
-    for doc, score in results:
-        print(f"Document Score: {score}")
-        relevant_chunks.append(doc.page_content)
-    return relevant_chunks
+    return [doc.page_content for doc, score in results]
+    
 
 @exception_handler
 def get_embedding_statistics():
-    embedding_dir = "embeddings"
-    abs_path = os.path.abspath(embedding_dir)
-    print("abs path", abs_path, flush=True)
-    if not os.path.exists(abs_path):
-        return {"error": f"Embeddings directory not found, {abs_path}"}, 404
+    """Returns total size and count of embeddings stored in GridFS."""
+    try:
+        fs = GridFS(mongo.db)
+        total_size = 0
+        total_embeddings = 0
         
-    total_size = 0
-    total_users = 0
-    
-    for filename in os.listdir(embedding_dir):
-        if filename.endswith('_embeddings.pkl'):
-            file_path = os.path.join(embedding_dir, filename)
-            size_mb = os.path.getsize(file_path) / (1024 * 1024)
-            total_size += size_mb
-            total_users += 1
-    
-    return {
-        "total_size_mb": round(total_size, 2),
-        "total_embeddings": total_users
-    }, 200
+        for grid_file in fs.find({"filename": {"$regex": "_embeddings$"}}):
+            total_size += grid_file.length
+            total_embeddings += 1
+            
+        return {
+            "total_size_mb": round(total_size / (1024 * 1024), 2),
+            "total_embeddings": total_embeddings
+        }, 200
+
+    except Exception as e:
+        print(f"Error getting embedding stats: {str(e)}", flush=True)
+        return {"error": str(e)}, 500
