@@ -16,6 +16,7 @@ function ChatbotAdmin() {
   const messagesEndRef = useRef(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [chatStarted, setChatStarted] = useState(false);
 
   useEffect(() => {
     fetchUserNames();
@@ -71,6 +72,10 @@ function ChatbotAdmin() {
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !selectedUser) return;
+
+    if (!chatStarted) {
+      setChatStarted(true);
+    }
 
     const userMessage = {
       text: inputMessage,
@@ -134,62 +139,69 @@ function ChatbotAdmin() {
       {/* Header with Custom Select */}
       <div className="flex items-center px-6 py-4 border-b border-gray-200 bg-white">
         <div className="flex items-center flex-1">
-          <h1 className="text-lg font-semibold text-gray-800">Chatbot Admin</h1>
+          <h1 className="text-lg font-semibold text-gray-800">Personalized AI Chatbot</h1>
         </div>
         
-        {/* Custom Select Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center justify-between w-[260px] px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-500 hover:bg-gray-100 transition-colors duration-150 focus:outline-none"
-          >
-            {selectedUser ? (
-              <div className="flex items-center">
-                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium">
-                  {selectedUser.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="ml-2 text-gray-700">{selectedUser.name}</span>
-              </div>
-            ) : (
-              <span className="text-gray-400">Select a user to chat</span>
-            )}
-            <svg
-              className={`w-4 h-4 ml-2 transition-transform duration-200 ${
-                isDropdownOpen ? 'transform rotate-180' : ''
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        {!chatStarted ? (
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center justify-between w-[260px] px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-500 hover:bg-gray-100 transition-colors duration-150 focus:outline-none"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+              {selectedUser ? (
+                <div className="flex items-center">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium">
+                    {selectedUser.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="ml-2 text-gray-700">{selectedUser.name}</span>
+                </div>
+              ) : (
+                <span className="text-gray-400">Select a user to chat</span>
+              )}
+              <svg
+                className={`w-4 h-4 ml-2 transition-transform duration-200 ${
+                  isDropdownOpen ? 'transform rotate-180' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-          {/* Dropdown Menu */}
-          {isDropdownOpen && (
-            <div className="absolute right-0 mt-1 w-[260px] py-1 bg-white border border-gray-100 rounded-lg shadow-lg z-50">
-              <div className="max-h-[240px] overflow-y-auto">
-                {users.map(user => (
-                  <button
-                    key={user.name}
-                    onClick={() => {
-                      handleUserSelect(user.name);
-                      setIsDropdownOpen(false);
-                    }}
-                    className={`w-full px-4 py-2 flex items-center hover:bg-gray-50 transition-colors duration-150 ${
-                      selectedUser?.name === user.name ? 'bg-gray-50' : ''
-                    }`}
-                  >
-                    <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium">
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="ml-3 text-sm text-gray-700">{user.name}</span>
-                  </button>
-                ))}
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-1 w-[260px] py-1 bg-white border border-gray-100 rounded-lg shadow-lg z-50">
+                <div className="max-h-[240px] overflow-y-auto">
+                  {users.map(user => (
+                    <button
+                      key={user.name}
+                      onClick={() => {
+                        handleUserSelect(user.name);
+                        setIsDropdownOpen(false);
+                      }}
+                      className={`w-full px-4 py-2 flex items-center hover:bg-gray-50 transition-colors duration-150 ${
+                        selectedUser?.name === user.name ? 'bg-gray-50' : ''
+                      }`}
+                    >
+                      <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="ml-3 text-sm text-gray-700">{user.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium">
+              {selectedUser.name.charAt(0).toUpperCase()}
             </div>
-          )}
-        </div>
+            <span className="ml-3 font-medium text-gray-700">{selectedUser.name}</span>
+          </div>
+        )}
       </div>
 
       {/* Chat Area */}
