@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom';
 import {
   UserOutlined,
   MessageOutlined,
-  MenuOutlined
+  MenuOutlined,
+  FileTextOutlined
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -34,6 +35,12 @@ function Sidebar() {
       icon: <MessageOutlined style={menuIconStyle} className="text-purple-500" />, 
       label: 'Chatbot Admin', 
       link: '/chatbot-admin' 
+    },
+    { 
+      key: '3', 
+      icon: <FileTextOutlined style={menuIconStyle} className="text-green-500" />, 
+      label: 'Static Answers', 
+      link: '/static-answers' 
     }
   ];
 

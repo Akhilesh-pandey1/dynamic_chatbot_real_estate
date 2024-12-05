@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Select, Avatar, Input, Button, List, message } from 'antd';
-import { UserOutlined, SendOutlined, RobotOutlined, FilterOutlined } from '@ant-design/icons';
+import { UserOutlined, SendOutlined, RobotOutlined, SearchOutlined } from '@ant-design/icons';
 import API from '../utils/API';
 
 const { TextArea } = Input;
@@ -8,6 +8,8 @@ const { Option } = Select;
 
 function ChatbotAdmin() {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [searchText, setSearchText] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -21,6 +23,13 @@ function ChatbotAdmin() {
   useEffect(() => {
     fetchUserNames();
   }, []);
+
+  useEffect(() => {
+    const filtered = users.filter(user => 
+      user.name.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+  }, [searchText, users]);
 
   useEffect(() => {
     scrollToBottom();
@@ -118,6 +127,10 @@ function ChatbotAdmin() {
     }
   };
 
+  const handleSearchChange = (e) => {
+    setSearchText(e.target.value);
+  };
+
   const renderMessages = () => {
     return messages.map((message, index) => (
       <div 
@@ -171,25 +184,67 @@ function ChatbotAdmin() {
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-1 w-[260px] py-1 bg-white border border-gray-100 rounded-lg shadow-lg z-50">
-                <div className="max-h-[240px] overflow-y-auto">
-                  {users.map(user => (
-                    <button
-                      key={user.name}
-                      onClick={() => {
-                        handleUserSelect(user.name);
-                        setIsDropdownOpen(false);
+              <div className="absolute right-0 mt-1 w-[300px] bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                  <div className="relative">
+                    <Input
+                      placeholder="Search users..."
+                      value={searchText}
+                      onChange={handleSearchChange}
+                      className="h-10 pl-10 pr-4 w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
+                      style={{ 
+                        boxShadow: 'none',
+                        fontSize: '0.95rem'
                       }}
-                      className={`w-full px-4 py-2 flex items-center hover:bg-gray-50 transition-colors duration-150 ${
-                        selectedUser?.name === user.name ? 'bg-gray-50' : ''
-                      }`}
-                    >
-                      <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium">
-                        {user.name.charAt(0).toUpperCase()}
+                    />
+                    <SearchOutlined 
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      style={{ fontSize: '16px' }}
+                    />
+                  </div>
+                </div>
+                <div className="py-2">
+                  <div className="max-h-[280px] overflow-y-auto custom-scrollbar">
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map(user => (
+                        <button
+                          key={user.name}
+                          onClick={() => {
+                            handleUserSelect(user.name);
+                            setIsDropdownOpen(false);
+                            setSearchText('');
+                          }}
+                          className="w-full px-4 py-3 flex items-center hover:bg-gray-50 transition-all duration-200 group"
+                        >
+                          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium shadow-sm group-hover:bg-blue-200 transition-colors duration-200">
+                            {user.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="ml-3 flex flex-col items-start">
+                            <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                              {user.name}
+                            </span>
+                            <span className="text-xs text-gray-500">User</span>
+                          </div>
+                          {selectedUser?.name === user.name && (
+                            <div className="ml-auto">
+                              <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-8 text-center">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                          <SearchOutlined style={{ fontSize: '24px' }} className="text-gray-400" />
+                        </div>
+                        <p className="text-sm text-gray-500">No users found matching "{searchText}"</p>
                       </div>
-                      <span className="ml-3 text-sm text-gray-700">{user.name}</span>
-                    </button>
-                  ))}
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -319,6 +374,23 @@ function ChatbotAdmin() {
 
         .ant-select-item-option-active {
           background-color: #f3f4f6 !important;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: rgba(0, 0, 0, 0.1);
+          border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(0, 0, 0, 0.2);
         }
       `}</style>
     </div>

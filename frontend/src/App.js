@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import UserList from './components/UserList';
 import ChatbotAdmin from './components/ChatbotAdmin';
+import StaticAnswers from './components/StaticAnswers';
 
 const { Content } = Layout;
 
@@ -42,6 +43,7 @@ function App() {
                 <Route path="/" element={<Navigate to="/users" replace />} />
                 <Route path="/users" element={<UserList />} />
                 <Route path="/chatbot-admin" element={<ChatbotAdmin />} />
+                <Route path="/static-answers" element={<StaticAnswers />} />
               </Routes>
             </Content>
           </Layout>
