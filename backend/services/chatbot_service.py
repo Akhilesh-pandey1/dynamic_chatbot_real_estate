@@ -27,7 +27,6 @@ def get_user_chat_response(name, chat_history):
         messages.append(HumanMessage(content=msg[0]))
         if msg[1]:
             messages.append(AIMessage(content=msg[1]))
-
     graph = create_agent_graph()
     initial_state = get_initial_state(last_question, messages, name)
     final_state = graph.invoke(initial_state)
