@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from database import mongo
 from services.auth_service import create_user, authenticate_user, verify_token, admin_required
-from services.user_service import create_user, delete_user_by_name, get_all_users, get_user_names
+from services.user_service import create_user, delete_user_by_name, get_all_users, get_user_names, delete_all_users
 from services.embedding_service import save_user_embeddings, modify_user_embeddings, get_embedding_statistics
 from services.chatbot_service import get_user_chat_response
 from functools import wraps
@@ -30,25 +30,6 @@ def token_required(f):
         user, error = verify_token(token)
         if error:
             return jsonify({'error': error[0]}), error[1]
-
-        return f(user, *args, **kwargs)
-    return decorated
-
-
-def admin_token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = request.headers.get('Authorization')
-        if not token:
-            return jsonify({'error': 'Token is missing'}), 401
-
-        token = token.split(' ')[1]
-        user, error = verify_token(token)
-        if error:
-            return jsonify({'error': error[0]}), error[1]
-
-        if not admin_required(user):
-            return jsonify({'error': 'Admin privileges required'}), 403
 
         return f(user, *args, **kwargs)
     return decorated
@@ -157,7 +138,18 @@ def get_embedding_stats():
         print(f"Error in get_embedding_stats: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+
 @main_bp.route('/api/admin/static-questions/<name>', methods=['GET'])
 def get_static_questions(name):
     result = get_question_answer_on_static_question(name)
     return jsonify(result), 200
+
+
+@main_bp.route('/api/admin/delete-all-users', methods=['DELETE'])
+def delete_all_users_route():
+    try:
+        response, status_code = delete_all_users()
+        return jsonify(response), status_code
+    except Exception as e:
+        print(f"Error in delete_all_users: {str(e)}")
+        return jsonify({"error": str(e)}), 500

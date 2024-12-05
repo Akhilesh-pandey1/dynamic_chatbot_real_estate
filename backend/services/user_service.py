@@ -70,4 +70,16 @@ def get_user_names():
     ))
     user_names = [user['name'] for user in users]
     return {"names": user_names}, 200
-   
+
+@exception_handler
+def delete_all_users():
+    fs = GridFS(mongo.db)
+    for grid_file in fs.find({"filename": {"$regex": "_embeddings$"}}):
+        fs.delete(grid_file._id)
+
+    result = mongo.db.users.delete_many({})
+
+    return {
+        "message": f"Successfully deleted {result.deleted_count} users and their embeddings",
+        "users_deleted": result.deleted_count
+    }, 200

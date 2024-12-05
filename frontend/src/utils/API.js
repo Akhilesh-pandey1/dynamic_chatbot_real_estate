@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const API = {
   handleError: (error) => {
@@ -154,6 +154,23 @@ const API = {
   getStaticQuestions: async (username) => {
     const response = await axios.get(`${API_BASE_URL}/api/admin/static-questions/${username}`);
     return response.data;
+  },
+
+  deleteAllUsers: async () => {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/api/admin/delete-all-users`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting all users:', error.response || error);
+      alert('Error deleting all users');
+      throw error;
+    }
   },
 };
 
