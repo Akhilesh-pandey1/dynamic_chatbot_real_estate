@@ -83,10 +83,10 @@ def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
         return []
 
     buffer = io.BytesIO(file_data.read())
-    document = buffer.getvalue()
+    db_bytes = buffer.getvalue()
     embedding_model = embedding_function()
-    # vectorstore = pickle.loads(buffer.getvalue())
-    vectorstore = FAISS.from_documents(document, embedding_model)
+    documents = [Document(page_content=chunk) for chunk in pickle.loads(db_bytes)]
+    vectorstore = FAISS.from_documents(documents, embedding_model)
 
     results = vectorstore.similarity_search_with_score(query, k=k)
     chunks = [doc.page_content for doc, score in results]
