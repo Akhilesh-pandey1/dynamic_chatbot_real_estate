@@ -1,6 +1,5 @@
 from flask_pymongo import PyMongo
 from pymongo.errors import ConnectionFailure, OperationFailure
-from try_catch_decorator import handle_exceptions
 
 mongo = PyMongo()
 
