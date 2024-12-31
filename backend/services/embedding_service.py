@@ -82,23 +82,29 @@ def modify_user_embeddings(username, new_text):
 
 @exception_handler
 def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
+    print(f"1. Starting get_relevant_chunks for user: {username}", flush=True)
     fs = GridFS(mongo.db)
     file_data = fs.find_one({"filename": f"{username}_embeddings"})
 
     if not file_data:
-        print(f"No embeddings found for user: {username}")
+        print(f"No embeddings found for user: {username}", flush=True)
         return []
 
+    print("2. Found file data in GridFS", flush=True)
     buffer = io.BytesIO(file_data.read())
     stored_data = pickle.loads(buffer.getvalue())
+    print(f"3. Loaded stored data type: {type(stored_data)}", flush=True)
     
-    # Get query embedding
+    print("4. Getting embedding model...", flush=True)
     embedding_model = embedding_function()
+    print("5. Got embedding model, getting query embedding...", flush=True)
     query_embedding = embedding_model.embed_query(query)
+    print("6. Got query embedding", flush=True)
     
-    # Use stored index directly
     results = stored_data.similarity_search_by_vector(query_embedding, k=k)
+    print(f"7. Got search results: {len(results)} items", flush=True)
     chunks = [doc.page_content for doc in results]
+    print(f"8. Returning {len(chunks)} chunks", flush=True)
     return chunks
 
 
