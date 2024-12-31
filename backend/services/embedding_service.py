@@ -1,6 +1,6 @@
 import pickle
-from langchain_community.embeddings import JinaEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain.vectorstores import FAISS
+from langchain.embeddings import OpenAIEmbeddings
 from langchain.docstore.document import Document
 from try_catch_decorator import exception_handler
 from datetime import datetime
@@ -77,17 +77,21 @@ def modify_user_embeddings(username, new_text):
 def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
     fs = GridFS(mongo.db)
     file_data = fs.find_one({"filename": f"{username}_embeddings"})
-
+    
     if not file_data:
         print(f"No embeddings found for user: {username}")
         return []
-
+    
     buffer = io.BytesIO(file_data.read())
     vectorstore = pickle.loads(buffer.getvalue())
-
-    results = vectorstore.similarity_search(query, k=k)
-    chunks = [doc.page_content for doc in results]
-    return chunks
+    
+    # Using FAISS's built-in similarity search
+    docs = vectorstore.similarity_search(
+        query,
+        k=k,
+        search_type="similarity"
+    )
+    return [doc.page_content for doc in docs]
 
 
 @exception_handler
