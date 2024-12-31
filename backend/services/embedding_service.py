@@ -85,8 +85,8 @@ def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
     buffer = io.BytesIO(file_data.read())
     vectorstore = pickle.loads(buffer.getvalue())
 
-    results = vectorstore.similarity_search_with_score(query, k=k)
-    chunks = [doc.page_content for doc, score in results]
+    results = vectorstore.similarity_search(query, k=k)
+    chunks = [doc.page_content for doc in results]
     return chunks
 
 

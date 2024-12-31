@@ -44,7 +44,6 @@ def login():
         data = request.get_json()
         response, status_code = authenticate_user(
             data.get('name'), data.get('password'))
-        print("DEBUG - Login response:", response)
         return jsonify(response), status_code
     except Exception as e:
         print(f"Error in login: {str(e)}")
@@ -59,7 +58,6 @@ def create_new_user():
         name = create_user(data.get('name'), data.get(
             'password'), data.get('text'))
         if isinstance(name, tuple) and isinstance(name[0], dict):
-            print("DEBUG - Create user response:", name[0])
             return jsonify(name[0]), name[1]
         response, status_code = save_user_embeddings(name, data.get('text'))
         question_answering_on_static_question(name)
@@ -74,7 +72,6 @@ def create_new_user():
 def delete_user(name):
     try:
         response, status_code = delete_user_by_name(name)
-        print("DEBUG - Delete user response:", response)
         return jsonify(response), status_code
     except Exception as e:
         print(f"Error in delete_user: {str(e)}")
@@ -89,7 +86,6 @@ def modify_user_embeddings_route(name):
         if not mongo.db.users.find_one({"name": name}):
             return jsonify({"error": "User not found"}), 404
         response, status_code = modify_user_embeddings(name, data.get('text'))
-        print("DEBUG - Modify embeddings response:", response)
         return jsonify(response), status_code
     except Exception as e:
         print(f"Error in modify_user_embeddings: {str(e)}")
@@ -101,7 +97,6 @@ def modify_user_embeddings_route(name):
 def get_users():
     try:
         response, status_code = get_all_users()
-        print("DEBUG - Get users response:", response)
         return jsonify(response), status_code
     except Exception as e:
         print(f"Error in get_users: {str(e)}")
@@ -114,7 +109,6 @@ def chat_with_user(name):
     try:
         data = request.get_json()
         chat_history = data.get('chat_history', [])
-        print("DEBUG - Chat history:", chat_history, flush=True)
         if not chat_history:
             return jsonify({"error": "Chat history is required"}), 400
         response, status_code = get_user_chat_response(name, chat_history)
@@ -130,7 +124,6 @@ def chat_with_user(name):
 def get_user_names_route():
     try:
         response, status_code = get_user_names()
-        print("DEBUG - Get user names response:", response)
         return jsonify(response), status_code
     except Exception as e:
         print(f"Error in get_user_names: {str(e)}")
@@ -142,7 +135,6 @@ def get_user_names_route():
 def get_embedding_stats():
     try:
         response, status_code = get_embedding_statistics()
-        print("DEBUG - Backend response:", response, flush=True)
         return jsonify(response), status_code
     except Exception as e:
         print(f"Error in get_embedding_stats: {str(e)}")
