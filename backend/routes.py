@@ -7,11 +7,13 @@ from services.embedding_service import save_user_embeddings, modify_user_embeddi
 from services.chatbot_service import get_user_chat_response
 from functools import wraps
 from services.save_static_question import question_answering_on_static_question, get_question_answer_on_static_question
+from try_catch_decorator_new import handle_route_exceptions
 
 main_bp = Blueprint('main', __name__)
 CORS(main_bp, supports_credentials=True)
 
 
+@handle_route_exceptions    
 @main_bp.route('/ping', methods=['GET', 'POST'])
 def ping():
     return jsonify({
@@ -35,6 +37,7 @@ def token_required(f):
     return decorated
 
 
+@handle_route_exceptions
 @main_bp.route('/api/login', methods=['POST'])
 def login():
     try:
@@ -48,6 +51,7 @@ def login():
         return jsonify({"error": str(e)}), 500
 
 
+@handle_route_exceptions
 @main_bp.route('/api/admin/create-user', methods=['POST'])
 def create_new_user():
     try:
@@ -65,6 +69,7 @@ def create_new_user():
         return jsonify({"error": str(e)}), 500
 
 
+@handle_route_exceptions
 @main_bp.route('/api/admin/delete-user/<name>', methods=['DELETE'])
 def delete_user(name):
     try:
@@ -76,6 +81,7 @@ def delete_user(name):
         return jsonify({"error": str(e)}), 500
 
 
+@handle_route_exceptions
 @main_bp.route('/api/admin/modify-user-embeddings/<name>', methods=['PUT'])
 def modify_user_embeddings_route(name):
     try:
@@ -90,6 +96,7 @@ def modify_user_embeddings_route(name):
         return jsonify({"error": str(e)}), 500
 
 
+@handle_route_exceptions
 @main_bp.route('/api/admin/users', methods=['GET'])
 def get_users():
     try:
@@ -101,6 +108,7 @@ def get_users():
         return jsonify({"error": str(e)}), 500
 
 
+@handle_route_exceptions
 @main_bp.route('/api/chat/<name>', methods=['POST'])
 def chat_with_user(name):
     try:
@@ -117,6 +125,7 @@ def chat_with_user(name):
         return jsonify({"error": str(e)}), 500
 
 
+@handle_route_exceptions
 @main_bp.route('/api/users/names', methods=['GET'])
 def get_user_names_route():
     try:
@@ -128,6 +137,7 @@ def get_user_names_route():
         return jsonify({"error": str(e)}), 500
 
 
+@handle_route_exceptions
 @main_bp.route('/api/embedding-stats', methods=['GET'])
 def get_embedding_stats():
     try:
@@ -139,12 +149,14 @@ def get_embedding_stats():
         return jsonify({"error": str(e)}), 500
 
 
+@handle_route_exceptions
 @main_bp.route('/api/admin/static-questions/<name>', methods=['GET'])
 def get_static_questions(name):
     result = get_question_answer_on_static_question(name)
     return jsonify(result), 200
 
 
+@handle_route_exceptions
 @main_bp.route('/api/admin/delete-all-users', methods=['DELETE'])
 def delete_all_users_route():
     try:
