@@ -1,18 +1,17 @@
-import pickle
-from langchain.vectorstores import FAISS
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import JinaEmbeddings
 from langchain.docstore.document import Document
 from try_catch_decorator import exception_handler
 from datetime import datetime
 from gridfs import GridFS
 import io
+import pickle
 from database import mongo
 
 
 @exception_handler
 def embedding_function():
-    embedding_model = JinaEmbeddings(model_name='jina-embeddings-v2-base-en')
-    return embedding_model
+    return JinaEmbeddings(model_name='jina-embeddings-v2-base-en')
 
 
 @exception_handler
@@ -40,15 +39,24 @@ def save_user_embeddings(username, text):
         raise ValueError("No valid text chunks found")
 
     documents = [Document(page_content=chunk) for chunk in chunks]
+    
     embedding_model = embedding_function()
-    db = FAISS.from_documents(documents, embedding_model)
-
+    vectorstore = FAISS.from_documents(
+        documents,
+        embedding_model
+    )
+    
+    # Save to MongoDB using GridFS
     buffer = io.BytesIO()
-    pickle.dump(db, buffer)
-
+    pickle.dump(vectorstore, buffer)
+    buffer.seek(0)
+    
     fs = GridFS(mongo.db)
+    existing = fs.find_one({"filename": f"{username}_embeddings"})
+    if existing:
+        fs.delete(existing._id)
+    
     fs.put(buffer.getvalue(), filename=f"{username}_embeddings")
-
     return {"message": "Embeddings saved successfully"}, 201
 
 
@@ -85,13 +93,18 @@ def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
     buffer = io.BytesIO(file_data.read())
     vectorstore = pickle.loads(buffer.getvalue())
     
-    # Using FAISS's built-in similarity search
-    docs = vectorstore.similarity_search(
+    # Use similarity search with score threshold
+    results = vectorstore.similarity_search_with_score(
         query,
         k=k,
-        search_type="similarity"
+        score_threshold=0.5
     )
-    return [doc.page_content for doc in docs]
+    
+    # Extract only the documents with their scores
+    return [
+        {"content": doc.page_content, "score": score}
+        for doc, score in results
+    ]
 
 
 @exception_handler
