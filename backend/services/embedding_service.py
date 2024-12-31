@@ -7,11 +7,18 @@ from datetime import datetime
 from gridfs import GridFS
 import io
 from database import mongo
+import os
 
 
 @exception_handler
 def embedding_function():
-    embedding_model = JinaEmbeddings(model_name='jina-embeddings-v2-base-en')
+    api_key = os.getenv('JINA_API_KEY')
+    if not api_key:
+        raise ValueError("JINA_API_KEY not found in environment variables")
+    embedding_model = JinaEmbeddings(
+        api_key=api_key,
+        model_name='jina-embeddings-v2-base-en'
+    )
     return embedding_model
 
 
