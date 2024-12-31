@@ -14,7 +14,7 @@ import os
 def embedding_function():
     api_key = os.getenv('JINA_API_KEY')
     if not api_key:
-        raise ValueError("JINA_API_KEY not found in environment variables")
+        raise ValueError("JINA_API_KEY not found in environment variables", flush=True)
     embedding_model = JinaEmbeddings(
         api_key=api_key,
         model_name='jina-embeddings-v2-base-en'
@@ -27,24 +27,24 @@ def chunk_text(text: str) -> list:
     """Split text into chunks by double newlines and return non-empty chunks."""
     chunks = [chunk.strip() for chunk in text.split('\n\n')]
     chunks = [chunk for chunk in chunks if chunk]
-    print("len(chunks)", len(chunks))
+    print("len(chunks)", len(chunks), flush=True)
     for i, chunk in enumerate(chunks):
-        print(f"Chunk {i}: {chunk[:100]}...")
+        print(f"Chunk {i}: {chunk[:100]}...", flush=True )
     return chunks
 
 
 @exception_handler
 def save_user_embeddings(username, text):
     if not username:
-        raise ValueError("Username is required")
+        raise ValueError("Username is required", flush=True)
     if not text:
-        raise ValueError("Text is required")
+        raise ValueError("Text is required", flush=True)
     if not isinstance(text, str):
-        raise TypeError("Text must be a string")
+        raise TypeError("Text must be a string", flush=True)
 
     chunks = chunk_text(text)
     if not chunks:
-        raise ValueError("No valid text chunks found")
+        raise ValueError("No valid text chunks found", flush=True)
 
     documents = [Document(page_content=chunk) for chunk in chunks]
     embedding_model = embedding_function()
@@ -63,7 +63,7 @@ def save_user_embeddings(username, text):
 def modify_user_embeddings(username, new_text):
     """Updates existing embeddings for a user with new text and tracks modifications."""
     if not new_text:
-        raise ValueError("New text is required")
+        raise ValueError("New text is required", flush=True)
     fs = GridFS(mongo.db)
     existing_file = fs.find_one({"filename": f"{username}_embeddings"})
 

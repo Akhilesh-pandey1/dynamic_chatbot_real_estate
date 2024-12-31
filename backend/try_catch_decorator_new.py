@@ -24,13 +24,13 @@ def handle_route_exceptions(func):
         try:
             return func(*args, **kwargs)
         except CustomException as e:
-            print(f"Custom Error: {str(e)}")
+            print(f"Custom Error: {str(e)}", flush=True)
             return jsonify({
                 "success": False,
                 "error": str(e)
             }), 400
         except Exception as e:
-            print(f"Interal Error: {str(e)}")
+            print(f"Interal Error: {str(e)}", flush=True)
             return jsonify({
                 "success": False,
                 "error": "Server error occurred"
