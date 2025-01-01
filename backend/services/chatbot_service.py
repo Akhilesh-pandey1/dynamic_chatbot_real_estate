@@ -1,8 +1,9 @@
-from try_catch_decorator import exception_handler
 from .agents import create_agent_graph
 from langchain_core.messages import HumanMessage, AIMessage
+from try_catch_decorator_new import handle_exceptions
 
-@exception_handler
+
+@handle_exceptions
 def get_initial_state(question, chat_history, username):
     initial_state = {
         "messages": chat_history,
@@ -12,11 +13,11 @@ def get_initial_state(question, chat_history, username):
         "response": "",
         "standalone_question": "",
         "username": username
-    } 
+    }
     return initial_state
 
 
-@exception_handler
+@handle_exceptions
 def get_user_chat_response(name, chat_history):
     """Generates a chat response for a user based on their chat history."""
     last_interaction = chat_history[-1]

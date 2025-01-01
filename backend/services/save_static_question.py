@@ -1,13 +1,11 @@
 from services.chatbot_service import get_user_chat_response
 from database import mongo
-from try_catch_decorator import exception_handler
+from try_catch_decorator_new import handle_exceptions
 from tenacity import retry, wait_fixed, stop_after_attempt
+from try_catch_decorator_new import CustomException
 
-content = f"""
 
-"""
-
-@exception_handler
+@handle_exceptions
 def list_static_questions():
     questions = ["Give me the contact information. In your response, try to use nouns more than pronouns.",
                  "What are the services do you offer? In your response, try to use nouns more than pronouns.",
@@ -15,14 +13,14 @@ def list_static_questions():
     return questions
 
 
-@exception_handler
+@handle_exceptions
 @retry(wait=wait_fixed(60), stop=stop_after_attempt(2))
 def call_chatbot_service(name, question):
     response, status_code = get_user_chat_response(name, [[question, ""]])
     return response['response']
 
 
-@exception_handler
+@handle_exceptions
 def question_answering_on_static_question(name):
     questions = list_static_questions()
     answers = []
@@ -33,16 +31,22 @@ def question_answering_on_static_question(name):
         {"name": name}, {"$set": {"static_answers": answers}})
     return answers
 
+
+@handle_exceptions
 def list_static_questions_for_frontend(name):
     questions = ["Give me the contact information.",
                  "What are the services do you offer?",
                  "How are you different from others?"]
     return questions
 
-@exception_handler
+
+@handle_exceptions
 def get_question_answer_on_static_question(name):
     questions = list_static_questions_for_frontend(name)
-    answers = mongo.db.users.find_one({"name": name})["static_answers"]
+    user_data = mongo.db.users.find_one({"name": name})
+    if not user_data or "static_answers" not in user_data:
+        raise CustomException("Static answers not found for this user")
+    answers = user_data["static_answers"]
     result = []
     for question, answer in zip(questions, answers):
         result.append([question, answer])

@@ -2,7 +2,7 @@ import pickle
 from langchain_community.embeddings import JinaEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
-from try_catch_decorator import exception_handler
+from try_catch_decorator_new import handle_exceptions
 from datetime import datetime
 from gridfs import GridFS
 import io
@@ -10,7 +10,7 @@ from database import mongo
 import os
 
 
-@exception_handler
+@handle_exceptions
 def embedding_function():
     api_key = os.getenv('JINA_API_KEY')
     if not api_key:
@@ -22,7 +22,7 @@ def embedding_function():
     return embedding_model
 
 
-@exception_handler
+@handle_exceptions
 def chunk_text(text: str) -> list:
     """Split text into chunks by double newlines and return non-empty chunks."""
     chunks = [chunk.strip() for chunk in text.split('\n\n')]
@@ -33,7 +33,7 @@ def chunk_text(text: str) -> list:
     return chunks
 
 
-@exception_handler
+@handle_exceptions
 def save_user_embeddings(username, text):
     if not username:
         raise ValueError("Username is required")
@@ -59,7 +59,7 @@ def save_user_embeddings(username, text):
     return {"message": "Embeddings saved successfully"}, 201
 
 
-@exception_handler
+@handle_exceptions
 def modify_user_embeddings(username, new_text):
     """Updates existing embeddings for a user with new text and tracks modifications."""
     if not new_text:
@@ -80,7 +80,7 @@ def modify_user_embeddings(username, new_text):
     return response, status_code
 
 
-@exception_handler
+@handle_exceptions
 def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
     fs = GridFS(mongo.db)
     file_data = fs.find_one({"filename": f"{username}_embeddings"})
@@ -102,7 +102,7 @@ def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
     return chunks
 
 
-@exception_handler
+@handle_exceptions
 def get_embedding_statistics():
     """Returns total size and count of embeddings stored in GridFS."""
     fs = GridFS(mongo.db)

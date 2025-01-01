@@ -14,7 +14,8 @@ def handle_exceptions(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            raise
+            print(f"Error in function {func.__name__}", flush=True)
+            raise e
     return wrapper
 
 

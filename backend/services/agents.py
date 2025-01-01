@@ -5,6 +5,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from .agent_helper import load_model, read_prompt_template, parse_intention_response, parse_llm_response
 from .embedding_service import get_relevant_chunks
+from try_catch_decorator_new import handle_exceptions
 
 
 class AgentState(TypedDict):
@@ -17,6 +18,7 @@ class AgentState(TypedDict):
     username: str
 
 
+@handle_exceptions
 def create_user_intention_node(state):
     llm = load_model()
     prompt = read_prompt_template("chatbot-query-analyzer-prompt.md")
@@ -38,6 +40,7 @@ def create_user_intention_node(state):
     return state
 
 
+@handle_exceptions
 def create_rag_node(state):
     llm = load_model()
     relevant_chunks = get_relevant_chunks(
@@ -69,18 +72,21 @@ def create_rag_node(state):
     return state
 
 
+@handle_exceptions
 def rag_needed(state):
     if state["greeting"] == True:
         return False
     return True
 
 
+@handle_exceptions
 def nodes_of_graph(workflow: StateGraph):
     workflow.add_node("user_intention", create_user_intention_node)
     workflow.add_node("rag", create_rag_node)
     return workflow
 
 
+@handle_exceptions
 def flow_of_graph(workflow: StateGraph):
     workflow.set_entry_point("user_intention")
     workflow.add_conditional_edges(
@@ -96,6 +102,7 @@ def flow_of_graph(workflow: StateGraph):
     return workflow
 
 
+@handle_exceptions
 def create_agent_graph() -> Graph:
     workflow = StateGraph(AgentState)
     workflow = nodes_of_graph(workflow)

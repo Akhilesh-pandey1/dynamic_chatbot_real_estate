@@ -1,11 +1,10 @@
 import os
 from langchain_groq import ChatGroq
 from pathlib import Path
-from try_catch_decorator import exception_handler
 import re
+from try_catch_decorator_new import handle_exceptions
 
-
-@exception_handler
+@handle_exceptions
 def load_model():
     GROQ_API_KEY = os.getenv('GROQ_API_KEY')
     LLM_TEMPERATURE = 0.7
@@ -18,7 +17,7 @@ def load_model():
     return llm_model
 
 
-@exception_handler
+@handle_exceptions
 def read_prompt_template(prompt_file_name: str) -> str:
     current_dir = Path(__file__).parent.parent
     prompts_dir = current_dir / "prompts"
@@ -28,7 +27,7 @@ def read_prompt_template(prompt_file_name: str) -> str:
     return content
 
 
-@exception_handler
+@handle_exceptions
 def parse_intention_response(xml_response: str, state: dict) -> dict:
     response_match = re.search(
         r'<response>(.*?)</response>', xml_response, re.DOTALL)
@@ -46,7 +45,7 @@ def parse_intention_response(xml_response: str, state: dict) -> dict:
     return response, greeting, standalone
 
 
-@exception_handler
+@handle_exceptions
 def parse_llm_response(xml_response: str) -> str:
     response_match = re.search(
         r'<response>(.*?)</response>', xml_response, re.DOTALL)

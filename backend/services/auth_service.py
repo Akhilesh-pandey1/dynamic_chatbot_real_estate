@@ -2,11 +2,11 @@ import jwt
 from datetime import datetime, timedelta
 import os
 from database import mongo
-from try_catch_decorator import exception_handler
+from try_catch_decorator_new import handle_exceptions
 from gridfs import GridFS
 
 
-@exception_handler
+@handle_exceptions
 def create_user(name, password, is_admin=False):
     if not name or not password:
         raise ValueError("Name and password are required")
@@ -18,7 +18,7 @@ def create_user(name, password, is_admin=False):
     return {"message": "User created successfully"}, 201
 
 
-@exception_handler
+@handle_exceptions
 def authenticate_user(name, password):
     if not name or not password:
         raise ValueError("Name and password are required")
@@ -33,17 +33,15 @@ def authenticate_user(name, password):
     return {"token": token, "is_admin": user.get('is_admin', False)}, 200
 
 
-@exception_handler
+@handle_exceptions
 def verify_token(token):
     data = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=['HS256'])
     current_user = mongo.db.users.find_one({'name': data['name']})
     return current_user, None
 
 
-@exception_handler
+@handle_exceptions
 def admin_required(user):
     if not user or not user.get('is_admin'):
         return False
     return True
-
-
