@@ -98,30 +98,22 @@ const API = {
     }
   },
 
-  chatWithUser: async (name, chatHistory) => {
+  chatWithUser: async (name, chatHistory, organization) => {
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/chat/${name}`,
-        { chat_history: chatHistory },
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          },
-          withCredentials: true
-        }
-      );
+      const response = await axios.post(`${API_BASE_URL}/api/chat/${name}`, {
+        chat_history: chatHistory,
+        organization: organization
+      });
       return response.data;
     } catch (error) {
-      console.error('Error in chat:', error.response || error);
-      alert('Server error');
-      throw error;
+      throw API.handleError(error);
     }
   },
 
-  getUserNames: async () => {
+  getUserNames: async (organization) => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/users/names`, {
+        params: { organization },
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'

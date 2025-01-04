@@ -14,6 +14,8 @@ function ChatbotAdmin() {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [organizations, setOrganizations] = useState(['manufacturing']);
+  const [selectedOrg, setSelectedOrg] = useState('manufacturing');
   const chatContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -21,8 +23,14 @@ function ChatbotAdmin() {
   const [chatStarted, setChatStarted] = useState(false);
 
   useEffect(() => {
-    fetchUserNames();
+    fetchOrganizations();
   }, []);
+
+  useEffect(() => {
+    if (selectedOrg) {
+      fetchUserNames();
+    }
+  }, [selectedOrg]);
 
   useEffect(() => {
     const filtered = users.filter(user => 
@@ -54,9 +62,24 @@ function ChatbotAdmin() {
     }
   }, [users]);
 
+  const fetchOrganizations = async () => {
+    try {
+      const orgs = await API.getOrganizations();
+      if (Array.isArray(orgs) && orgs.length > 0) {
+        setOrganizations(orgs);
+        if (!selectedOrg) {
+          setSelectedOrg(orgs[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch organizations:', error);
+      message.error('Failed to fetch organizations');
+    }
+  };
+
   const fetchUserNames = async () => {
     try {
-      const names = await API.getUserNames();
+      const names = await API.getUserNames(selectedOrg);
       const usersList = names.map(name => ({ name }));
       setUsers(usersList);
       
@@ -110,7 +133,7 @@ function ChatbotAdmin() {
       
       formattedHistory.push([userMessage.text, null]);
 
-      const response = await API.chatWithUser(selectedUser.name, formattedHistory);
+      const response = await API.chatWithUser(selectedUser.name, formattedHistory, selectedOrg);
 
       const aiMessage = {
         text: response.response,
@@ -149,112 +172,139 @@ function ChatbotAdmin() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Header with Custom Select */}
+      {/* Header with Organization and User Select */}
       <div className="flex items-center px-6 py-4 border-b border-gray-200 bg-white">
         <div className="flex items-center flex-1">
           <h1 className="text-lg font-semibold text-gray-800">Personalized AI Chatbot</h1>
         </div>
         
         {!chatStarted ? (
-          <div className="relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center justify-between w-[260px] px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-500 hover:bg-gray-100 transition-colors duration-150 focus:outline-none"
-            >
-              {selectedUser ? (
-                <div className="flex items-center">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium">
-                    {selectedUser.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="ml-2 text-gray-700">{selectedUser.name}</span>
-                </div>
-              ) : (
-                <span className="text-gray-400">Select a user to chat</span>
-              )}
-              <svg
-                className={`w-4 h-4 ml-2 transition-transform duration-200 ${
-                  isDropdownOpen ? 'transform rotate-180' : ''
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <div className="flex items-center space-x-4">
+            {/* Organization Dropdown */}
+            <div className="relative">
+              <select
+                value={selectedOrg}
+                onChange={(e) => {
+                  setSelectedOrg(e.target.value);
+                  setSelectedUser(null);
+                  setMessages([]);
+                }}
+                className="h-10 pl-4 pr-10 bg-gray-50 border border-gray-200 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-150 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+                {organizations.map(org => (
+                  <option key={org} value={org}>
+                    {org.charAt(0).toUpperCase() + org.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-1 w-[300px] bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                  <div className="relative">
-                    <Input
-                      placeholder="Search users..."
-                      value={searchText}
-                      onChange={handleSearchChange}
-                      className="h-10 pl-10 pr-4 w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
-                      style={{ 
-                        boxShadow: 'none',
-                        fontSize: '0.95rem'
-                      }}
-                    />
-                    <SearchOutlined 
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                      style={{ fontSize: '16px' }}
-                    />
+            {/* User Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center justify-between w-[260px] px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-500 hover:bg-gray-100 transition-colors duration-150 focus:outline-none"
+              >
+                {selectedUser ? (
+                  <div className="flex items-center">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium">
+                      {selectedUser.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="ml-2 text-gray-700">{selectedUser.name}</span>
                   </div>
-                </div>
-                <div className="py-2">
-                  <div className="max-h-[280px] overflow-y-auto custom-scrollbar">
-                    {filteredUsers.length > 0 ? (
-                      filteredUsers.map(user => (
-                        <button
-                          key={user.name}
-                          onClick={() => {
-                            handleUserSelect(user.name);
-                            setIsDropdownOpen(false);
-                            setSearchText('');
-                          }}
-                          className="w-full px-4 py-3 flex items-center hover:bg-gray-50 transition-all duration-200 group"
-                        >
-                          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium shadow-sm group-hover:bg-blue-200 transition-colors duration-200">
-                            {user.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="ml-3 flex flex-col items-start">
-                            <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
-                              {user.name}
-                            </span>
-                            <span className="text-xs text-gray-500">User</span>
-                          </div>
-                          {selectedUser?.name === user.name && (
-                            <div className="ml-auto">
-                              <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </div>
+                ) : (
+                  <span className="text-gray-400">Select a user to chat</span>
+                )}
+                <svg
+                  className={`w-4 h-4 ml-2 transition-transform duration-200 ${
+                    isDropdownOpen ? 'transform rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-1 w-[300px] bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                    <div className="relative">
+                      <Input
+                        placeholder="Search users..."
+                        value={searchText}
+                        onChange={handleSearchChange}
+                        className="h-10 pl-10 pr-4 w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200"
+                        style={{ 
+                          boxShadow: 'none',
+                          fontSize: '0.95rem'
+                        }}
+                      />
+                      <SearchOutlined 
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                        style={{ fontSize: '16px' }}
+                      />
+                    </div>
+                  </div>
+                  <div className="py-2">
+                    <div className="max-h-[280px] overflow-y-auto custom-scrollbar">
+                      {filteredUsers.length > 0 ? (
+                        filteredUsers.map(user => (
+                          <button
+                            key={user.name}
+                            onClick={() => {
+                              handleUserSelect(user.name);
+                              setIsDropdownOpen(false);
+                              setSearchText('');
+                            }}
+                            className="w-full px-4 py-3 flex items-center hover:bg-gray-50 transition-all duration-200 group"
+                          >
+                            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium shadow-sm group-hover:bg-blue-200 transition-colors duration-200">
+                              {user.name.charAt(0).toUpperCase()}
                             </div>
-                          )}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-8 text-center">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                          <SearchOutlined style={{ fontSize: '24px' }} className="text-gray-400" />
+                            <div className="ml-3 flex flex-col items-start">
+                              <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                                {user.name}
+                              </span>
+                              <span className="text-xs text-gray-500">User</span>
+                            </div>
+                            {selectedUser?.name === user.name && (
+                              <div className="ml-auto">
+                                <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                              </div>
+                            )}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-8 text-center">
+                          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                            <SearchOutlined style={{ fontSize: '24px' }} className="text-gray-400" />
+                          </div>
+                          <p className="text-sm text-gray-500">No users found matching "{searchText}"</p>
                         </div>
-                        <p className="text-sm text-gray-500">No users found matching "{searchText}"</p>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         ) : (
-          <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium">
-              {selectedUser.name.charAt(0).toUpperCase()}
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-gray-600">
+              {selectedOrg.charAt(0).toUpperCase() + selectedOrg.slice(1)}
             </div>
-            <span className="ml-3 font-medium text-gray-700">{selectedUser.name}</span>
+            <div className="flex items-center">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-medium">
+                {selectedUser.name.charAt(0).toUpperCase()}
+              </div>
+              <span className="ml-3 font-medium text-gray-700">{selectedUser.name}</span>
+            </div>
           </div>
         )}
       </div>
