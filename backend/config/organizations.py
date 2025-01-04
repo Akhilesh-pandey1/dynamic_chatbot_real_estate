@@ -26,7 +26,7 @@ ORGANIZATIONS = {
         'db_url': os.getenv('GENERAL_DB_URL'),
         'prompt_type': 'general',
         'prompt_files': {
-            'rag': 'chatbot-rag-prompt.md'
+            'rag': 'general-org-prompt.md'
         }
     }
 }
