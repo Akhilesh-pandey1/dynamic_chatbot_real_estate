@@ -78,8 +78,9 @@ function ChatbotAdmin() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch organizations:', error);
-      message.error('Failed to fetch organizations');
+      // Silent error handling
+      setOrganizations(['manufacturing']);
+      setSelectedOrg('manufacturing');
     }
   };
 
@@ -95,7 +96,8 @@ function ChatbotAdmin() {
         setMessages([]);
       }
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      // Silent error handling
+      setUsers([]);
     }
   };
 
@@ -166,7 +168,13 @@ function ChatbotAdmin() {
 
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
-      message.error(error.message);
+      // Add a generic error message in chat instead of showing error popup
+      const errorMessage = {
+        text: "I'm unable to respond at the moment. Please try again.",
+        sender: 'bot',
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
