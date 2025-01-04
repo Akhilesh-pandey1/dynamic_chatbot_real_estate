@@ -15,19 +15,19 @@ def list_static_questions():
 
 @handle_exceptions
 @retry(wait=wait_fixed(60), stop=stop_after_attempt(2))
-def call_chatbot_service(name, question):
-    response, status_code = get_user_chat_response(name, [[question, ""]])
+def call_chatbot_service(name, question, organization=None):
+    response, status_code = get_user_chat_response(name, [[question, ""]], organization)
     return response['response']
 
 
 @handle_exceptions
-def question_answering_on_static_question(name):
+def question_answering_on_static_question(name, organization=None):
     questions = list_static_questions()
     answers = []
     for question in questions:
-        response = call_chatbot_service(name, question)
+        response = call_chatbot_service(name, question, organization)
         answers.append(response)
-    mongo.db.users.update_one(
+    mongo.get_db(organization).users.update_one(
         {"name": name}, {"$set": {"static_answers": answers}})
     return answers
 
@@ -41,9 +41,9 @@ def list_static_questions_for_frontend(name):
 
 
 @handle_exceptions
-def get_question_answer_on_static_question(name):
+def get_question_answer_on_static_question(name, organization=None):
     questions = list_static_questions_for_frontend(name)
-    user_data = mongo.db.users.find_one({"name": name})
+    user_data = mongo.get_db(organization).users.find_one({"name": name})
     if not user_data or "static_answers" not in user_data:
         raise CustomException("Static answers not found for this user")
     answers = user_data["static_answers"]

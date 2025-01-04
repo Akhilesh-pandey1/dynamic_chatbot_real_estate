@@ -8,7 +8,7 @@ from gridfs import GridFS
 import io
 from database import mongo
 import os
-
+from config.organizations import ORGANIZATIONS
 
 @handle_exceptions
 def embedding_function():
@@ -34,7 +34,7 @@ def chunk_text(text: str) -> list:
 
 
 @handle_exceptions
-def save_user_embeddings(username, text):
+def save_user_embeddings(username, text, organization=None):
     if not username:
         raise ValueError("Username is required")
     if not text:
@@ -53,36 +53,37 @@ def save_user_embeddings(username, text):
     buffer = io.BytesIO()
     pickle.dump(db, buffer)
 
-    fs = GridFS(mongo.db)
+    fs = GridFS(mongo.get_db(organization))
     fs.put(buffer.getvalue(), filename=f"{username}_embeddings")
 
     return {"message": "Embeddings saved successfully"}, 201
 
 
 @handle_exceptions
-def modify_user_embeddings(username, new_text):
+def modify_user_embeddings(username, new_text, organization=None):
     """Updates existing embeddings for a user with new text and tracks modifications."""
     if not new_text:
         raise ValueError("New text is required")
-    fs = GridFS(mongo.db)
+    db = mongo.get_db(organization)
+    fs = GridFS(db)
     existing_file = fs.find_one({"filename": f"{username}_embeddings"})
 
     fs.delete(existing_file._id)
     modified_at = datetime.utcnow()
-    mongo.db.users.update_one(
+    db.users.update_one(
         {"name": username},
         {
             "$set": {"created_at": modified_at},
             "$inc": {"modifications": 1}
         }
     )
-    response, status_code = save_user_embeddings(username, new_text)
+    response, status_code = save_user_embeddings(username, new_text, organization)
     return response, status_code
 
 
 @handle_exceptions
-def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
-    fs = GridFS(mongo.db)
+def get_relevant_chunks(username: str, query: str, organization=None, k: int = 3) -> list:
+    fs = GridFS(mongo.get_db(organization))
     file_data = fs.find_one({"filename": f"{username}_embeddings"})
 
     if not file_data:
@@ -103,9 +104,9 @@ def get_relevant_chunks(username: str, query: str, k: int = 3) -> list:
 
 
 @handle_exceptions
-def get_embedding_statistics():
+def get_embedding_statistics(organization=None):
     """Returns total size and count of embeddings stored in GridFS."""
-    fs = GridFS(mongo.db)
+    fs = GridFS(mongo.get_db(organization))
     total_size = 0
     total_embeddings = 0
 
@@ -117,3 +118,23 @@ def get_embedding_statistics():
         "total_size_mb": round(total_size / (1024 * 1024), 2),
         "total_embeddings": total_embeddings
     }, 200
+
+
+@handle_exceptions
+def get_all_organizations_embedding_stats():
+    all_stats = {}
+    total_size = 0
+    total_embeddings = 0
+    
+    for org_name in ORGANIZATIONS.keys():
+        response, _ = get_embedding_statistics(org_name)
+        all_stats[org_name] = response
+        total_size += response['total_size_mb']
+        total_embeddings += response['total_embeddings']
+    
+    all_stats['total'] = {
+        'total_size_mb': total_size,
+        'total_embeddings': total_embeddings
+    }
+    
+    return all_stats, 200

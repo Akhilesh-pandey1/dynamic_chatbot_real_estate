@@ -16,12 +16,14 @@ class AgentState(TypedDict):
     response: str
     standalone_question: str
     username: str
+    organization: str
 
 
 @handle_exceptions
 def create_user_intention_node(state):
     llm = load_model()
-    prompt = read_prompt_template("chatbot-query-analyzer-prompt.md")
+    prompt = read_prompt_template(
+        "chatbot-query-analyzer-prompt.md", state["organization"])
     prompt_template = PromptTemplate(template=prompt, input_variables=[
                                      "chat_history", "current_question"])
 
@@ -44,7 +46,7 @@ def create_user_intention_node(state):
 def create_rag_node(state):
     llm = load_model()
     relevant_chunks = get_relevant_chunks(
-        state["username"], state["current_question"])
+        state["username"], state["current_question"], state["organization"])
     context = "Empty" if not relevant_chunks else "\n".join(relevant_chunks)
 
     # Convert messages to chat history string format
@@ -56,7 +58,8 @@ def create_rag_node(state):
             for msg in state["messages"]
         ])
 
-    prompt = read_prompt_template("chatbot-rag-prompt.md")
+    prompt = read_prompt_template(
+        "chatbot-rag-prompt.md", state["organization"])
     prompt_template = PromptTemplate(template=prompt, input_variables=[
                                      "context", "chat_history", "current_question"])
 

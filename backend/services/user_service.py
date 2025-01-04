@@ -4,33 +4,38 @@ from datetime import datetime
 from try_catch_decorator_new import handle_exceptions, CustomException
 
 @handle_exceptions
-def create_user(name, password, text):
-    if not name or not password:
-        raise ValueError("Name and password are required")
+def create_user(name, password, text, organization):
+    if not name or not password or not organization:
+        raise CustomException("Name, password and organization are required")
 
     if not text:
-        raise ValueError("Initial text is required")
+        raise CustomException("Initial text is required")
 
-    if mongo.db.users.find_one({"name": name}):
+    db = mongo.get_db(organization)
+    if db.users.find_one({"name": name}):
         raise ValueError("Name already exists")
 
     created_at = datetime.utcnow()
-    mongo.db.users.insert_one(
-        {"name": name, "password": password, "created_at": created_at})
+    db.users.insert_one({
+        "name": name, 
+        "password": password, 
+        "created_at": created_at
+    })
     return name
 
 
 @handle_exceptions
-def delete_user_by_name(name):
+def delete_user_by_name(name, organization):
     if not name:
         raise ValueError("Name is required")
 
-    result = mongo.db.users.find_one_and_delete({"name": name})
+    db = mongo.get_db(organization)
+    result = db.users.find_one_and_delete({"name": name})
 
     if not result:
         raise ValueError("User not found")
 
-    fs = GridFS(mongo.db)
+    fs = GridFS(db)
     embedding_file = fs.find_one({"filename": f"{name}_embeddings"})
     if embedding_file:
         fs.delete(embedding_file._id)
@@ -39,9 +44,9 @@ def delete_user_by_name(name):
 
 
 @handle_exceptions
-def get_all_users():
-
-    users = list(mongo.db.users.find(
+def get_all_users(organization=None):
+    db = mongo.get_db(organization)
+    users = list(db.users.find(
         {},
         {
             "_id": 0,
@@ -62,8 +67,9 @@ def get_all_users():
 
 
 @handle_exceptions
-def get_user_names():
-    users = list(mongo.db.users.find(
+def get_user_names(organization=None):
+    db = mongo.get_db(organization)
+    users = list(db.users.find(
         {},
         {
             "_id": 0,
@@ -75,12 +81,13 @@ def get_user_names():
 
 
 @handle_exceptions
-def delete_all_users():
-    fs = GridFS(mongo.db)
+def delete_all_users(organization=None):
+    db = mongo.get_db(organization)
+    fs = GridFS(db)
     for grid_file in fs.find({"filename": {"$regex": "_embeddings$"}}):
         fs.delete(grid_file._id)
 
-    result = mongo.db.users.delete_many({})
+    result = db.users.delete_many({})
 
     return {
         "message": f"Successfully deleted {result.deleted_count} users and their embeddings",

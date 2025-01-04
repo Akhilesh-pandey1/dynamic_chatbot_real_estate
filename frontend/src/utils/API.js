@@ -21,9 +21,10 @@ const API = {
     }
   },
 
-  getAllUsers: async () => {
+  getAllUsers: async (organization) => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/admin/users`, {
+        params: { organization },
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -56,11 +57,12 @@ const API = {
     }
   },
 
-  deleteUser: async (name) => {
+  deleteUser: async (name, organization) => {
     try {
       const response = await axios.delete(
         `${API_BASE_URL}/api/admin/delete-user/${name}`,
         {
+          params: { organization },
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
@@ -156,9 +158,10 @@ const API = {
     return response.data;
   },
 
-  deleteAllUsers: async () => {
+  deleteAllUsers: async (organization) => {
     try {
       const response = await axios.delete(`${API_BASE_URL}/api/admin/delete-all-users`, {
+        params: { organization },
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -169,6 +172,20 @@ const API = {
     } catch (error) {
       console.error('Error deleting all users:', error.response || error);
       alert('Error deleting all users');
+      throw error;
+    }
+  },
+
+  getOrganizations: async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/organizations`, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.data.organizations;
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
       throw error;
     }
   },

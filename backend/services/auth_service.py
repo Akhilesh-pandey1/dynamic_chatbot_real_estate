@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import os
 from database import mongo
 from try_catch_decorator_new import handle_exceptions
-from gridfs import GridFS
 
 
 @handle_exceptions
@@ -19,11 +18,12 @@ def create_user(name, password, is_admin=False):
 
 
 @handle_exceptions
-def authenticate_user(name, password):
+def authenticate_user(name, password, organization=None):
     if not name or not password:
         raise ValueError("Name and password are required")
 
-    user = mongo.db.users.find_one({"name": name})
+    db = mongo.get_db(organization)
+    user = db.users.find_one({"name": name})
     if not user or user['password'] != password:
         raise ValueError("Invalid credentials")
 
@@ -34,9 +34,10 @@ def authenticate_user(name, password):
 
 
 @handle_exceptions
-def verify_token(token):
+def verify_token(token, organization=None):
     data = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=['HS256'])
-    current_user = mongo.db.users.find_one({'name': data['name']})
+    db = mongo.get_db(organization)
+    current_user = db.users.find_one({'name': data['name']})
     return current_user, None
 
 

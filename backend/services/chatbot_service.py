@@ -4,7 +4,7 @@ from try_catch_decorator_new import handle_exceptions
 
 
 @handle_exceptions
-def get_initial_state(question, chat_history, username):
+def get_initial_state(question, chat_history, username, organization):
     initial_state = {
         "messages": chat_history,
         "intent": "",
@@ -12,13 +12,14 @@ def get_initial_state(question, chat_history, username):
         "current_question": question,
         "response": "",
         "standalone_question": "",
-        "username": username
+        "username": username,
+        "organization": organization
     }
     return initial_state
 
 
 @handle_exceptions
-def get_user_chat_response(name, chat_history):
+def get_user_chat_response(name, chat_history, organization):
     """Generates a chat response for a user based on their chat history."""
     last_interaction = chat_history[-1]
     last_question = last_interaction[0]
@@ -29,11 +30,11 @@ def get_user_chat_response(name, chat_history):
         if msg[1]:
             messages.append(AIMessage(content=msg[1]))
     graph = create_agent_graph()
-    initial_state = get_initial_state(last_question, messages, name)
+    initial_state = get_initial_state(
+        last_question, messages, name, organization)
     final_state = graph.invoke(initial_state)
-    ai_response = final_state["response"]   
+    ai_response = final_state["response"]
     print("ai_response", ai_response, flush=True)
     return {
         "response": ai_response,
     }, 200
-            
