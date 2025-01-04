@@ -57,13 +57,15 @@ def get_all_users(organization=None):
         }
     ))
 
-    for user in users:
+    latest_users = sorted(users, key=lambda x: x['created_at'], reverse=True)
+
+    for user in latest_users:
         if 'created_at' in user:
             user['created_at'] = user['created_at'].isoformat()
         if 'modifications' not in user:
             user['modifications'] = 0
 
-    return {"users": users}, 200
+    return {"users": latest_users}, 200
 
 
 @handle_exceptions
