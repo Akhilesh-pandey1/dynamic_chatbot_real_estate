@@ -210,6 +210,11 @@ function UserList() {
   const [selectedOrg, setSelectedOrg] = useState('manufacturing');
   const pageSize = 10;
 
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText]);
+
   // Fetches organizations on component mount
   useEffect(() => {
     fetchOrganizations();
@@ -222,7 +227,32 @@ function UserList() {
     }
   }, [selectedOrg]);
 
-  // Fetches available organizations
+  // Filter users based on search text
+  const getFilteredUsers = () => {
+    if (!searchText.trim()) return users;
+    
+    const searchLower = searchText.toLowerCase();
+    return users.filter(user => 
+      user.name.toLowerCase().includes(searchLower) ||
+      user.password.toLowerCase().includes(searchLower) ||
+      (user.created_at && user.created_at.toLowerCase().includes(searchLower))
+    );
+  };
+
+  // Pagination calculations with filtered users
+  const filteredUsers = getFilteredUsers();
+  const indexOfLastUser = currentPage * pageSize;
+  const indexOfFirstUser = indexOfLastUser - pageSize;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / pageSize);
+
+  // Handle search text change
+  const handleSearchChange = (value) => {
+    setSearchText(value);
+    setCurrentPage(1); // Reset to first page on search
+  };
+
+  // Fetches organizations on component mount
   const fetchOrganizations = async () => {
     try {
       const orgs = await API.getOrganizations();
@@ -295,12 +325,6 @@ function UserList() {
     setCurrentPage(1);
   };
 
-  // Pagination calculations
-  const indexOfLastUser = currentPage * pageSize;
-  const indexOfFirstUser = indexOfLastUser - pageSize;
-  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
-  const totalPages = Math.ceil(users.length / pageSize);
-
   // Conditional rendering based on state
   if (showStats) return <EmbeddingStats onBack={() => setShowStats(false)} />;
   if (error) return <div className="w-full p-4 text-red-600">Error: {error}</div>;
@@ -314,7 +338,7 @@ function UserList() {
       <div className="p-6 flex flex-col h-full">
         <Header
           onStatsClick={() => setShowStats(true)}
-          onSearchChange={setSearchText}
+          onSearchChange={handleSearchChange}
           onCreateUser={() => setShowCreateForm(true)}
           onDeleteAllUsers={handleDeleteAllUsers}
           organizations={organizations}
@@ -329,11 +353,11 @@ function UserList() {
               onDelete={handleDelete}
               formatDate={formatDate}
             />
-            {users.length > 0 && (
+            {filteredUsers.length > 0 && (
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                totalUsers={users.length}
+                totalUsers={filteredUsers.length}
                 onPrevPage={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 onNextPage={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               />
