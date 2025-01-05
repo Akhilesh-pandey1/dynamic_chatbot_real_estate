@@ -6,18 +6,6 @@ from try_catch_decorator_new import handle_exceptions
 
 
 @handle_exceptions
-def create_user(name, password, is_admin=False):
-    if not name or not password:
-        raise ValueError("Name and password are required")
-
-    if mongo.db.users.find_one({"name": name}):
-        raise ValueError("Name already exists")
-
-    mongo.db.users.insert_one({"name": name, "password": password})
-    return {"message": "User created successfully"}, 201
-
-
-@handle_exceptions
 def authenticate_user(name, password, organization=None):
     if not name or not password:
         raise ValueError("Name and password are required")

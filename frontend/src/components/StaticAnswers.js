@@ -130,13 +130,76 @@ function StaticAnswers() {
   const [loading, setLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [questionsStarted, setQuestionsStarted] = useState(false);
+  const [organizations, setOrganizations] = useState(['manufacturing']);
+  const [selectedOrg, setSelectedOrg] = useState('manufacturing');
   const dropdownRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // Initialize by fetching users on component mount
+  // Initialize by fetching organizations and users
   useEffect(() => {
-    fetchUserNames();
+    fetchOrganizations();
   }, []);
+
+  useEffect(() => {
+    if (selectedOrg) {
+      fetchUserNames();
+    }
+  }, [selectedOrg]);
+
+  // Fetch organizations from API
+  const fetchOrganizations = async () => {
+    try {
+      const orgs = await API.getOrganizations();
+      if (Array.isArray(orgs) && orgs.length > 0) {
+        setOrganizations(orgs);
+        if (!selectedOrg) {
+          setSelectedOrg(orgs[0]);
+        }
+      }
+    } catch (error) {
+      setOrganizations(['manufacturing']);
+      setSelectedOrg('manufacturing');
+    }
+  };
+
+  const fetchUserNames = async () => {
+    try {
+      const names = await API.getUserNames(selectedOrg);
+      const usersList = names.map(name => ({ name }));
+      setUsers(usersList);
+      if (usersList.length > 0) {
+        setSelectedUser(usersList[0]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      setUsers([]);
+    }
+  };
+
+  // Handle organization change
+  const handleOrgChange = (e) => {
+    setSelectedOrg(e.target.value);
+    setSelectedUser(null);
+    setQuestions([]);
+    setQuestionsStarted(false);
+  };
+
+  // Render organization dropdown
+  const renderOrgDropdown = () => (
+    <div className="relative">
+      <select
+        value={selectedOrg}
+        onChange={handleOrgChange}
+        className="h-10 pl-4 pr-10 bg-gray-50 border border-gray-200 rounded-md text-gray-700 hover:bg-gray-100 transition-colors duration-150 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      >
+        {organizations.map(org => (
+          <option key={org} value={org}>
+            {org.charAt(0).toUpperCase() + org.slice(1)}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 
   // Update filtered users whenever search text changes
   useEffect(() => {
@@ -164,19 +227,6 @@ function StaticAnswers() {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const fetchUserNames = async () => {
-    try {
-      const names = await API.getUserNames();
-      const usersList = names.map(name => ({ name }));
-      setUsers(usersList);
-      if (usersList.length > 0) {
-        setSelectedUser(usersList[0]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-    }
   };
 
   const handleUserSelect = (user) => {
@@ -217,6 +267,7 @@ function StaticAnswers() {
         
         {!questionsStarted ? (
           <div className="relative flex items-center gap-4" ref={dropdownRef}>
+            {renderOrgDropdown()}
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center justify-between w-[260px] px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-500 hover:bg-gray-100 transition-colors duration-150 focus:outline-none"

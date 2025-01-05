@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_cors import CORS
 from database import mongo
-from services.auth_service import create_user, authenticate_user, verify_token, admin_required
+from services.auth_service import authenticate_user, verify_token, admin_required
 from services.user_service import create_user, delete_user_by_name, get_all_users, get_user_names, delete_all_users
 from services.embedding_service import save_user_embeddings, modify_user_embeddings, get_all_organizations_embedding_stats
 from services.chatbot_service import get_user_chat_response
@@ -30,7 +30,8 @@ def token_required(f):
             return jsonify({'error': 'Token is missing'}), 401
 
         token = token.split(' ')[1]
-        organization = request.args.get('organization') or request.get_json().get('organization')
+        organization = request.args.get(
+            'organization') or request.get_json().get('organization')
         user, error = verify_token(token, organization)
         if error:
             return jsonify({'error': error[0]}), error[1]

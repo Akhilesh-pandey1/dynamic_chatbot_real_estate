@@ -50,10 +50,19 @@ const API = {
           withCredentials: true
         }
       );
-      return response.data;
+      
+      if (response.status === 201) {
+        return response.data;
+      } else {
+        throw new Error(response.data?.error || 'Failed to create user');
+      }
     } catch (error) {
-      alert(error.response?.data?.error || 'Failed to create user');
-      throw error;
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else {
+        console.error('Error details:', error);
+        throw new Error('Failed to create user. Please try again.');
+      }
     }
   },
 

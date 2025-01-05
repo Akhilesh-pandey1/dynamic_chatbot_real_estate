@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeftOutlined, PlusOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import API from '../utils/API';
+import { useNavigate } from 'react-router-dom';
 
 function CreateUser({ onBack }) {
   // State for form data including user details and organization
@@ -14,6 +15,7 @@ function CreateUser({ onBack }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [organizations, setOrganizations] = useState([]);
+  const navigate = useNavigate();
 
   // Fetches available organizations and sets the first one as default
   const fetchOrganizations = async () => {
@@ -35,19 +37,32 @@ function CreateUser({ onBack }) {
   // Handles form submission and user creation
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.organization) {
-      message.error('Please select an organization');
-      return;
-    }
     setLoading(true);
+
+    // Add organization-specific prefix to username
+    const prefixMap = {
+      'real_estate': 'rs',
+      'manufacturing': 'mf',
+      'finance': 'fn',
+      'general': 'gn'
+    };
+
+    const prefix = prefixMap[formData.organization] || 'gn';
+    const prefixedUsername = `${prefix}_${formData.name}`;
+
     try {
-      const response = await API.createUser(formData);
-      console.log('User created:', response);
+      const response = await API.createUser({
+        name: prefixedUsername,
+        password: formData.password,
+        text: formData.text,
+        organization: formData.organization
+      });
+      
       message.success('User created successfully');
       onBack();
     } catch (error) {
       console.error('Error creating user:', error);
-      message.error(error.response?.data?.error || 'Failed to create user');
+      message.error(error.message || 'Failed to create user');
     } finally {
       setLoading(false);
     }
@@ -82,23 +97,38 @@ function CreateUser({ onBack }) {
   );
 
   // Renders the username input field
-  const renderUsernameField = () => (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        Username
-      </label>
-      <input
-        type="text"
-        name="name"
-        value={formData.name}
-        onChange={handleChange}
-        required
-        disabled={loading}
-        className="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 placeholder-gray-400 disabled:opacity-50"
-        placeholder="Enter username"
-      />
-    </div>
-  );
+  const renderUsernameField = () => {
+    const prefixMap = {
+      'real_estate': 'rs',
+      'manufacturing': 'mf',
+      'finance': 'fn',
+      'general': 'gn'
+    };
+    const prefix = prefixMap[formData.organization] || 'gn';
+
+    return (
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Username
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+            <span className="text-gray-500">{prefix}_</span>
+          </div>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            disabled={loading}
+            className="block w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none text-gray-900 placeholder-gray-400 disabled:opacity-50"
+            placeholder="Enter username"
+          />
+        </div>
+      </div>
+    );
+  };
 
   // Renders the password input field with visibility toggle
   const renderPasswordField = () => (
