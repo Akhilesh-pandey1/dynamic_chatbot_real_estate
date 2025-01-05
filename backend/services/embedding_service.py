@@ -106,17 +106,20 @@ def get_relevant_chunks(username: str, query: str, organization=None, k: int = 3
 @handle_exceptions
 def get_embedding_statistics(organization=None):
     """Returns total size and count of embeddings stored in GridFS."""
-    fs = GridFS(mongo.get_db(organization))
+    db = mongo.get_db(organization)
     total_size = 0
     total_embeddings = 0
 
+    user_count = db.users.count_documents({})
+
+    fs = GridFS(db)
     for grid_file in fs.find({"filename": {"$regex": "_embeddings$"}}):
         total_size += grid_file.length
         total_embeddings += 1
 
     return {
         "total_size_mb": round(total_size / (1024 * 1024), 2),
-        "total_embeddings": total_embeddings
+        "total_embeddings": user_count
     }, 200
 
 

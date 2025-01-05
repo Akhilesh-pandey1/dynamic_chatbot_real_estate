@@ -14,11 +14,11 @@ function ModifyUser({ user, onBack }) {
     setLoading(true);
     try {
       await API.modifyUser(user.name, formData.text);
-      message.success('Training text updated successfully');
-      onBack(); // Return to list view
+      alert('Training text updated successfully');
+      onBack();
     } catch (error) {
       console.error('Error modifying user:', error);
-      message.error(error.response?.data?.error || 'Failed to update training text');
+      alert(error.response?.data?.error || 'Failed to update training text');
     } finally {
       setLoading(false);
     }

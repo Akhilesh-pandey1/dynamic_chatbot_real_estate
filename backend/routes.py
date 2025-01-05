@@ -44,9 +44,10 @@ def token_required(f):
 @handle_route_exceptions
 def login():
     data = request.get_json()
-    organization = data.get('organization')
     response, status_code = authenticate_user(
-        data.get('name'), data.get('password'), organization)
+        data.get('name'), 
+        data.get('password')
+    )
     return jsonify(response), status_code
 
 
@@ -80,11 +81,24 @@ def delete_user(name):
 @handle_route_exceptions
 def modify_user_embeddings_route(name):
     data = request.get_json()
-    organization = data.get('organization')
-    if not mongo.get_db(organization).users.find_one({"name": name}):
+    
+    org_map = {
+        'rs_': 'real_estate',
+        'mf_': 'manufacturing',
+        'fn_': 'finance',
+        'gn_': 'general'
+    }
+    prefix = name[:3]
+    determined_org = org_map.get(prefix)
+    
+    if not determined_org:
+        raise CustomException("Invalid username format")
+    
+    if not mongo.get_db(determined_org).users.find_one({"name": name}):
         raise CustomException("User not found")
+        
     response, status_code = modify_user_embeddings(
-        name, data.get('text'), organization)
+        name, data.get('text'), determined_org)
     return jsonify(response), status_code
 
 
