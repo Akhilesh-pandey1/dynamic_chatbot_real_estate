@@ -37,6 +37,23 @@ function CreateUser({ onBack }) {
   // Handles form submission and user creation
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.organization) {
+      alert('Please select an organization');
+      return;
+    }
+
+    // Check for spaces in username or password
+    if (formData.name.trim() !== formData.name || formData.password.trim() !== formData.password) {
+      alert('Username and password cannot contain leading or trailing spaces');
+      return;
+    }
+
+    // Check for spaces within username or password
+    if (formData.name.includes(' ') || formData.password.includes(' ')) {
+      alert('Username and password cannot contain spaces');
+      return;
+    }
+
     setLoading(true);
 
     // Add organization-specific prefix to username
@@ -58,11 +75,10 @@ function CreateUser({ onBack }) {
         organization: formData.organization
       });
       
-      message.success('User created successfully');
+      alert('User created successfully!');
       onBack();
     } catch (error) {
-      console.error('Error creating user:', error);
-      message.error(error.message || 'Failed to create user');
+      alert(error.message || 'Failed to create user');
     } finally {
       setLoading(false);
     }
