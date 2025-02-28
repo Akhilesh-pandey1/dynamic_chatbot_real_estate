@@ -14,7 +14,7 @@ def load_model():
     llm_model = ChatGroq(
         api_key=GROQ_API_KEY,
         temperature=LLM_TEMPERATURE,
-        model="llama-3.1-70b-versatile",
+        model="llama-3.3-70b-versatile",
     )
     return llm_model
 
